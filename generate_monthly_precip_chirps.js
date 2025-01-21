@@ -72,9 +72,9 @@ var computeSumMonthly = function(coll, ROI, startDate, endDate) {
 // ====================================================================================
 // Pre-process the ROI
 var geomRoi = roi.geometry()
-var line_bioma = ee.Image().paint(roi,'vazio', 1).eq(0)
+var line_geom = ee.Image().paint(roi,'vazio', 1).eq(0)
 var visPar = {'palette':'000000','opacity': 1};
-Map.addLayer(line_bioma, visPar, 'Limite região 0')
+Map.addLayer(line_geom, visPar, 'Region Shape')
 
 print("==============================\nRESULTS")
 // Compute the monthly precipitation
