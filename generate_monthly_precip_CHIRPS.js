@@ -44,7 +44,7 @@ var computeSumMonthly = function(coll, ROI, startDate, endDate) {
     {min: 1, max: 17, palette: ['001137', '0aab1e', 'e7eb05', 'ff4a2d', 'e90000']}, 
     'Precipitation');
   
-    // Add 'month' and 'year' properties to each image
+  // Add 'month' and 'year' properties to each image
   var collectionWithMonthYear = collection.map(function(image) {
     var date = ee.Date(image.get('system:time_start'));
     var month = date.get('month'); // Get the month
@@ -54,14 +54,32 @@ var computeSumMonthly = function(coll, ROI, startDate, endDate) {
 
   // Get the list of unique years in the collection
   var years = collectionWithMonthYear.aggregate_array('year').distinct();
-  var nYears = years.size(); // Number of unique years
 
-  // Calculate the accumulated precipitation for each month
-  var monthlyAccumulatedPrecipitation = ee.FeatureCollection(ee.List.sequence(1, 12).map(function(month) {
-    var monthCollection = collectionWithMonthYear.filter(ee.Filter.eq('month', month));
-
-    // Sum precipitation for the month across all years
-    var monthlySum = monthCollection.sum()
+  // Calculate the accumulated precipitation for each month and year
+  var anualSum = years.map(function(year) {
+    var mensalSum = ee.List.sequence(1, 12).map(
+      function(month) {
+        var monthCollection = collectionWithMonthYear
+          .filter(ee.Filter.eq('month', month))
+          .filter(ee.Filter.eq('year', year))
+        return ee.Algorithms.If(
+          monthCollection.size().eq(0), 
+          null, 
+          monthCollection.sum().set('month', month)
+        )
+      },
+      true
+    )
+    return mensalSum
+  })
+  anualSum = ee.ImageCollection(anualSum.flatten())
+  print(anualSum)
+  
+  // Calculate the mean precipitation for each month
+  var mean_mensal = ee.List.sequence(1, 12).map(function(month) {
+    var monthlyMean = anualSum
+      .filter(ee.Filter.eq('month', month))
+      .mean()
       .reduceRegion({
         reducer: ee.Reducer.mean(),
         geometry: ROI,
@@ -70,16 +88,15 @@ var computeSumMonthly = function(coll, ROI, startDate, endDate) {
       })
       .get('precipitation');
 
-    // Divide the accumulated monthly precipitation by the number of years
-    var monthlyMean = ee.Number(monthlySum).divide(nYears);
-
     return ee.Feature(null, {
       'month': month,
       'mean_precipitation': monthlyMean
     });
-  }));
+  })
+  mean_mensal = ee.FeatureCollection(mean_mensal)
+  print(mean_mensal)
 
-  return monthlyAccumulatedPrecipitation;
+  return mean_mensal;
 };
 
 // ====================================================================================
