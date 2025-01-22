@@ -96,9 +96,9 @@ print("Monthly Precipitacion", monthlySumPrecipitacion)
 // Export the result
 Export.table.toDrive({
   collection: monthlySumPrecipitacion,
-  description: 'monthly_precipitacion_30Years_CHIRPS',
+  description: 'precip_CHIRPS_'+startDate+"_"+endDate,
   folder: "GEE_tables",
-  fileNamePrefix: 'monthly_precipitacion_30Years_CHIRPS',
+  fileNamePrefix: 'precip_CHIRPS_'+startDate+"_"+endDate,
   fileFormat: 'CSV'
 });
 
@@ -108,18 +108,9 @@ print("----------------------------------------------------\nRESULTS")
 
 // Array with month names
 var monthNames = [
-  {v: 1, f: 'Jan'}, 
-  {v: 2, f: 'Feb'}, 
-  {v: 3, f: 'Mar'}, 
-  {v: 4, f: 'Apr'}, 
-  {v: 5, f: 'Mai'}, 
-  {v: 6, f: 'Jun'}, 
-  {v: 7, f: 'Jul'}, 
-  {v: 8, f: 'Aug'}, 
-  {v: 9, f: 'Sep'}, 
-  {v: 10, f: 'Oct'}, 
-  {v: 11, f: 'Nov'}, 
-  {v: 12, f: 'Dec'}
+  {v: 1, f: 'Jan'}, {v: 2, f: 'Feb'}, {v: 3, f: 'Mar'}, {v: 4, f: 'Apr'}, 
+  {v: 5, f: 'Mai'}, {v: 6, f: 'Jun'}, {v: 7, f: 'Jul'}, {v: 8, f: 'Aug'}, 
+  {v: 9, f: 'Sep'}, {v: 10, f: 'Oct'}, {v: 11, f: 'Nov'}, {v: 12, f: 'Dec'}
 ];
 
 // Precipitation chart
@@ -128,35 +119,28 @@ var precipitationChart = ui.Chart.feature.byFeature({
   xProperty: 'month',
   yProperties: ['mean_precipitation']
 })
-.setOptions({
-  title: 'Monthly Precipitation',
-  hAxis: {
-    // title: 'Month',
-    format: '0',
-    ticks: monthNames,
-    gridlines: {
-      color: '#f5f5f5'
+  .setChartType('ColumnChart')
+  .setOptions({
+    title: 'Monthly Precipitation',
+    hAxis: {
+      // title: 'Month',
+      format: '0',
+      ticks: monthNames,
+      gridlines: {color: '#f5f5f5'},
+      minorGridlines: {color: '#f5f5f5',count: 1}
     },
-    minorGridlines: {
-      color: '#f5f5f5',
-      count: 1
-    }
-  },
-  vAxis: {
-    title: 'Precipitation (mm)',
-    gridlines: {
-      color: '#f5f5f5',
+    vAxis: {
+      title: 'Precipitation (mm)',
+      gridlines: {color: '#f5f5f5'},
+      minorGridlines: {color: '#f5f5f5',count: 2},
+      viewWindow: {min: 0,max: 200}
     },
-    minorGridlines: {
-      color: '#f5f5f5',
-      count: 2
+    bar: {groupWidth: "50%"},
+    legend: {position: 'none'},
+    series: {
+      0: {color: '#0875d4'}
     }
-  },
-  series: {
-    0: {color: '#0875d4'}
-  }
-});
+  });
 
-// Adicionar o gráfico ao console
+// Print chart on console
 print(precipitationChart);
-
