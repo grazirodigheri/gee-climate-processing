@@ -17,8 +17,8 @@ var climateColl = ee.ImageCollection('UCSB-CHG/CHIRPS/DAILY')
 var collScale = 5566
  
 // Define the start and end of period
-var startDate = '1999-01-01';
-var endDate = '2000-12-31';
+var startDate = '1991-01-01';
+var endDate = '2020-12-31';
 
 // =========================================================
 // ====== Function to compute monthly precipitation  =======
@@ -44,30 +44,43 @@ var computeSumMonthly = function(coll, ROI, startDate, endDate) {
     {min: 1, max: 17, palette: ['001137', '0aab1e', 'e7eb05', 'ff4a2d', 'e90000']}, 
     'Precipitation');
   
-  // Add 'month' property for each image
-  var collectionWithMonth = collection.map(function(image) {
+    // Add 'month' and 'year' properties to each image
+  var collectionWithMonthYear = collection.map(function(image) {
     var date = ee.Date(image.get('system:time_start'));
     var month = date.get('month'); // Get the month
-    return image.set('month', month);
+    var year = date.get('year');   // Get the year
+    return image.set('month', month).set('year', year);
   });
 
-  // Calculate mean monthly precipitacion 
-  var monthlySum = ee.FeatureCollection(ee.List.sequence(1, 12).map(function(month) {
-    var monthCollection = collectionWithMonth.filter(ee.Filter.eq('month', month));
-    var data = monthCollection.sum()
+  // Get the list of unique years in the collection
+  var years = collectionWithMonthYear.aggregate_array('year').distinct();
+  var nYears = years.size(); // Number of unique years
+
+  // Calculate the accumulated precipitation for each month
+  var monthlyAccumulatedPrecipitation = ee.FeatureCollection(ee.List.sequence(1, 12).map(function(month) {
+    var monthCollection = collectionWithMonthYear.filter(ee.Filter.eq('month', month));
+
+    // Sum precipitation for the month across all years
+    var monthlySum = monthCollection.sum()
       .reduceRegion({
         reducer: ee.Reducer.mean(),
         geometry: ROI,
         scale: collScale,
         maxPixels: 1e13
       })
-      .set('month', month);
+      .get('precipitation');
 
-    return ee.Feature(null, data);
+    // Divide the accumulated monthly precipitation by the number of years
+    var monthlyMean = ee.Number(monthlySum).divide(nYears);
+
+    return ee.Feature(null, {
+      'month': month,
+      'mean_precipitation': monthlyMean
+    });
   }));
 
-  return monthlySum;
-}
+  return monthlyAccumulatedPrecipitation;
+};
 
 // ====================================================================================
 // Pre-process the ROI
@@ -113,7 +126,7 @@ var monthNames = [
 var precipitationChart = ui.Chart.feature.byFeature({
   features: monthlySumPrecipitacion, 
   xProperty: 'month',
-  yProperties: ['precipitation']
+  yProperties: ['mean_precipitation']
 })
 .setOptions({
   title: 'Monthly Precipitation',
