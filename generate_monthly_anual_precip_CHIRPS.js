@@ -154,44 +154,43 @@ Export.table.toDrive({
 });
 
 // ====================================================================================
-// Generate chart of the data
-print("----------------------------------------------------\nRESULTS")
+// Generate chart of the monthly data
+print("----------------------------------------------------\nRESULTS");
 
-// Array with month names
+// Define month names for display
 var monthNames = [
   {v: 1, f: 'Jan'}, {v: 2, f: 'Feb'}, {v: 3, f: 'Mar'}, {v: 4, f: 'Apr'}, 
-  {v: 5, f: 'Mai'}, {v: 6, f: 'Jun'}, {v: 7, f: 'Jul'}, {v: 8, f: 'Aug'}, 
+  {v: 5, f: 'May'}, {v: 6, f: 'Jun'}, {v: 7, f: 'Jul'}, {v: 8, f: 'Aug'}, 
   {v: 9, f: 'Sep'}, {v: 10, f: 'Oct'}, {v: 11, f: 'Nov'}, {v: 12, f: 'Dec'}
 ];
 
-// Precipitation chart
+// Create the chart combining bars and line
 var precipitationChart = ui.Chart.feature.byFeature({
-  features: monthlyFeatureCollection, 
+  features: monthlyFeatureCollection,
   xProperty: 'month',
-  yProperties: ['mean']
+  yProperties: ['mean', 'std']
 })
-  .setChartType('ColumnChart')
+  .setChartType('ComboChart')  // Use ComboChart to combine bars and lines
   .setOptions({
     title: 'Monthly Precipitation',
     hAxis: {
-      // title: 'Month',
+      title: 'Month',
       format: '0',
-      ticks: monthNames,
-      gridlines: {color: '#f5f5f5'},
-      minorGridlines: {color: '#f5f5f5',count: 1}
+      ticks: monthNames
     },
     vAxis: {
       title: 'Precipitation (mm)',
-      gridlines: {color: '#f5f5f5'},
-      minorGridlines: {color: '#f5f5f5',count: 2},
-      viewWindow: {min: 0,max: 200}
+      gridlines: {count: 6},
+      minorGridlines: {count: 1},
+      viewWindow: {min: 0}
     },
-    bar: {groupWidth: "50%"},
-    legend: {position: 'none'},
     series: {
-      0: {color: '#0875d4'}
-    }
+      0: {type: 'bars', color: '#09a0e6'}, // Mean as bars
+      1: {type: 'line', color: '#1109e6', lineWidth: 2} // Standard deviation as a line
+    },
+    legend: {position: 'bottom'},
+    bar: {groupWidth: "50%"}
   });
 
-// Print chart on console
-print(precipitationChart);
+// Display the chart
+print("Monthly Precipitation", precipitationChart);
