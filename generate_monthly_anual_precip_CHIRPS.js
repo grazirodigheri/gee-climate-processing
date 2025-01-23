@@ -194,3 +194,58 @@ var precipitationChart = ui.Chart.feature.byFeature({
 
 // Display the chart
 print("Monthly Precipitation", precipitationChart);
+
+// ====================================================================================
+// Generate chart of the annual data
+print("----------------------------------------------------\nRESULTS");
+
+// Array of colors for months
+var monthColors = [
+  '#fde725', '#c2df23', '#86d549', '#52c569', '#2ab07f', '#1e9b8a', 
+  '#25858e', '#2d708e', '#38588c', '#433e85', '#482173', '#440154'
+];
+
+// Create a table directly from the ImageCollection
+var precipitationTable = result.monthlyCollection.map(function(image) {
+  return ee.Feature(null, {
+    'year': image.get('year'),
+    'month': image.get('month'),
+    'precipitation': image.reduceRegion({
+      reducer: ee.Reducer.mean(),
+      geometry: geomRoi,
+      scale: collScale,
+      maxPixels: 1e13
+    }).get('precipitation')
+  });
+});
+
+// Group data for the chart
+var precipitationChart = ui.Chart.feature.groups({
+  features: precipitationTable,
+  xProperty: 'year',
+  yProperty: 'precipitation',
+  seriesProperty: 'month'
+})
+.setChartType('ColumnChart')
+.setOptions({
+  title: 'Annual Precipitation',
+  hAxis: {
+    title: 'Year',
+    format: '####',
+    // gridlines: {count: 10},
+    // ticks: ee.List.sequence(ee.Number.parse(startYear), ee.Number.parse(endYear)), // Ensure all years are shown
+    textStyle: {fontSize: 10}
+  },
+  vAxis: {
+    title: 'Precipitation (mm)',
+    gridlines: {count: 5},
+    minorGridlines: {count: 2},
+    viewWindow: {min: 0}
+  },
+  isStacked: true, // Stacked bars
+  colors: monthColors, // Apply colors for each month
+  legend: {position: 'bottom'}
+});
+
+// Display the chart
+print("Annual Precipitation", precipitationChart);
